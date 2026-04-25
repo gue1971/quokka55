@@ -102,6 +102,30 @@
       text-decoration: none;
     }
 
+    #musicToggle {
+      position: absolute;
+      top: 66px;
+      left: 22px;
+      z-index: 40;
+      min-width: 86px;
+      margin: 0;
+      border: 2px solid rgba(121, 78, 32, .38);
+      border-radius: 999px;
+      padding: 6px 11px;
+      background: rgba(255, 251, 235, .9);
+      color: #74431e;
+      box-shadow: 0 3px 0 rgba(112, 69, 24, .14);
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    #musicToggle.is-on {
+      border-color: rgba(126, 155, 82, .64);
+      background: rgba(238, 249, 214, .92);
+      color: #4d6f2d;
+    }
+
     #title {
       position: absolute;
       top: 82px;
@@ -324,7 +348,8 @@
       <div class="badge">HAPPY <span id="score">0</span></div>
     </div>
 
-    <a id="mvpLink" href="mvp/" aria-label="MVPバージョンを開く">MVP</a>
+    <button id="musicToggle" type="button" aria-pressed="false">BGM OFF</button>
+    <a id="mvpLink" href="mvp/index.html" aria-label="MVPバージョンを開く">MVP</a>
 
     <div id="title">
       <div class="main">ありがとうキャッチ</div>
@@ -350,6 +375,8 @@
         <button id="againBtn">もう一回</button>
       </div>
     </div>
+
+    <audio id="bgm" src="assets/quokka-kettle.mp3" loop preload="auto"></audio>
   </div>
 
   <script>
@@ -364,6 +391,8 @@
     const resultText = document.getElementById('resultText');
     const startBtn = document.getElementById('startBtn');
     const againBtn = document.getElementById('againBtn');
+    const musicToggle = document.getElementById('musicToggle');
+    const bgm = document.getElementById('bgm');
 
     const GAME_SECONDS = 15;
     const items = [];
@@ -374,6 +403,7 @@
     let elapsed = 0;
     let spawnTimer = 0;
     let pointerDown = false;
+    let musicOn = false;
 
     const itemTypes = [
       { label: '♡', kind: 'good', points: 10, size: 52, weight: 28 },
@@ -444,6 +474,36 @@
       field.querySelectorAll('.floatText').forEach(el => el.remove());
     }
 
+    function syncMusicButton() {
+      musicToggle.textContent = musicOn ? 'BGM ON' : 'BGM OFF';
+      musicToggle.setAttribute('aria-pressed', musicOn ? 'true' : 'false');
+      musicToggle.classList.toggle('is-on', musicOn);
+    }
+
+    async function playMusic() {
+      if (!musicOn) return;
+      bgm.volume = 0.42;
+      try {
+        await bgm.play();
+      } catch {
+        bgm.pause();
+      }
+    }
+
+    function stopMusic() {
+      bgm.pause();
+    }
+
+    function toggleMusic() {
+      musicOn = !musicOn;
+      syncMusicButton();
+      if (musicOn) {
+        playMusic();
+      } else {
+        stopMusic();
+      }
+    }
+
     function startGame() {
       clearItems();
       score = 0;
@@ -455,6 +515,7 @@
       timeEl.textContent = GAME_SECONDS.toFixed(1);
       overlay.classList.add('hidden');
       setPlayerX(0.5);
+      playMusic();
       requestAnimationFrame(loop);
     }
 
@@ -558,6 +619,8 @@
 
     startBtn.addEventListener('click', startGame);
     againBtn.addEventListener('click', startGame);
+    musicToggle.addEventListener('click', toggleMusic);
+    syncMusicButton();
   </script>
 </body>
 </html>
