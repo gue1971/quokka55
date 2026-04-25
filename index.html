@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>ありがとうキャッチ</title>
+  <meta name="theme-color" content="#e8772f" />
+  <meta name="description" content="55才になりました。笑顔のクオッカとありがとうを集めるミニゲーム。" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ありがとうキャッチ" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <style>
     :root {
       --ink: #4a2c18;
@@ -759,6 +767,12 @@
       if (e.target === characterModal) closeCharacterSheet();
     });
     syncMusicButton();
+
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
   </script>
 </body>
 </html>
