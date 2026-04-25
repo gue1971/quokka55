@@ -404,6 +404,7 @@
     let spawnTimer = 0;
     let pointerDown = false;
     let musicOn = false;
+    let audioContext = null;
 
     const itemTypes = [
       { label: '♡', kind: 'good', points: 10, size: 52, weight: 28 },
@@ -474,6 +475,54 @@
       field.querySelectorAll('.floatText').forEach(el => el.remove());
     }
 
+    function getAudioContext() {
+      if (!audioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        audioContext = new AudioContextClass();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    function playCatchSound(points) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(points > 0 ? 0.16 : 0.1, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + (points > 0 ? 0.22 : 0.18));
+
+      const first = ctx.createOscillator();
+      const second = ctx.createOscillator();
+      first.type = 'sine';
+      second.type = points > 0 ? 'triangle' : 'sine';
+
+      if (points > 0) {
+        first.frequency.setValueAtTime(660, now);
+        first.frequency.exponentialRampToValueAtTime(990, now + 0.1);
+        second.frequency.setValueAtTime(1320, now + 0.055);
+        second.frequency.exponentialRampToValueAtTime(1760, now + 0.16);
+      } else {
+        first.frequency.setValueAtTime(260, now);
+        first.frequency.exponentialRampToValueAtTime(160, now + 0.13);
+        second.frequency.setValueAtTime(190, now + 0.03);
+        second.frequency.exponentialRampToValueAtTime(120, now + 0.16);
+      }
+
+      first.connect(gain);
+      second.connect(gain);
+      first.start(now);
+      second.start(now + (points > 0 ? 0.055 : 0.03));
+      first.stop(now + (points > 0 ? 0.18 : 0.16));
+      second.stop(now + (points > 0 ? 0.22 : 0.18));
+    }
+
     function syncMusicButton() {
       musicToggle.textContent = musicOn ? 'BGM ON' : 'BGM OFF';
       musicToggle.setAttribute('aria-pressed', musicOn ? 'true' : 'false');
@@ -505,6 +554,7 @@
     }
 
     function startGame() {
+      getAudioContext();
       clearItems();
       score = 0;
       elapsed = 0;
@@ -568,6 +618,7 @@
         const itemRect = item.el.getBoundingClientRect();
         if (!item.hit && rectsOverlap(playerHitRect, itemRect)) {
           item.hit = true;
+          playCatchSound(item.type.points);
           score = Math.max(0, score + item.type.points);
           scoreEl.textContent = score;
           const cx = itemRect.left - wrapRect.left + itemRect.width / 2;
